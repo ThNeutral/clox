@@ -1,7 +1,7 @@
 #ifndef clox_memory_h
 #define clox_memory_h
 
-#include "core/common.h"
+#include "utils/common.h"
 #include <stdlib.h>
 
 #define GROW_CAPACITY(capacity) \

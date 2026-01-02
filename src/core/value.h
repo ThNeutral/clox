@@ -1,7 +1,7 @@
 #ifndef VALUE_H
 #define VALUE_H
 
-#include "core/common.h"
+#include "utils/common.h"
 
 typedef double Value;
 
