@@ -27,6 +27,23 @@ void write_chunk(Chunk *chunk, uint8_t byte, int line)
     chunk->count += 1;
 }
 
+void write_constant(Chunk *chunk, Value value, int line)
+{
+    int index = add_constant(chunk, value);
+
+    if (index <= 255)
+    {
+        write_chunk(chunk, OP_CONSTANT, line);
+        write_chunk(chunk, index, line);
+        return;
+    }
+
+    write_chunk(chunk, OP_CONSTANT_LONG, line);
+    write_chunk(chunk, (index >> 16) & 0xFF, line);
+    write_chunk(chunk, (index >> 8) & 0xFF, line);
+    write_chunk(chunk, (index & 0xFF), line);
+}
+
 int get_line(Chunk *chunk, int index)
 {
     int line = read_rle_array(&chunk->lines, index);
