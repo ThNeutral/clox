@@ -1,6 +1,8 @@
 #ifndef clox_memory_h
 #define clox_memory_h
 
+// TODO: manual heap for reallocate()
+
 #include "utils/common.h"
 #include <stdlib.h>
 

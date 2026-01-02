@@ -3,6 +3,12 @@
 
 #include <stdio.h>
 
+int add_constant(Chunk *chunk, Value value)
+{
+    write_value_array(&chunk->constants, value);
+    return chunk->constants.count - 1;
+}
+
 void init_chunk(Chunk *chunk)
 {
     chunk->capacity = 0;
@@ -44,6 +50,23 @@ void write_constant(Chunk *chunk, Value value, int line)
     write_chunk(chunk, (index & 0xFF), line);
 }
 
+int get_constant_index(Chunk *chunk, int offset, int size)
+{
+    int index = 0;
+
+    for (int i = 1; i <= size; i++)
+    {
+        index = (index << 8) | chunk->code[offset + i];
+    }
+
+    return index;
+}
+
+Value read_constant(Chunk *chunk, int index)
+{
+    return chunk->constants.values[index];
+}
+
 int get_line(Chunk *chunk, int index)
 {
     int line = read_rle_array(&chunk->lines, index);
@@ -61,10 +84,4 @@ void free_chunk(Chunk *chunk)
     FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
     free_rle_array(&chunk->lines);
     init_chunk(chunk);
-}
-
-int add_constant(Chunk *chunk, Value value)
-{
-    write_value_array(&chunk->constants, value);
-    return chunk->constants.count - 1;
 }

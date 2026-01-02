@@ -10,15 +10,11 @@ static int simple_instruction(const char *name, int offset)
 
 static int constant_instruction(const char *name, Chunk *chunk, int offset, int size)
 {
-    uint32_t index = 0;
-
-    for (int i = 1; i <= size; i++)
-    {
-        index = (index << 8) | chunk->code[offset + i];
-    }
+    int index = get_constant_index(chunk, offset, size);
+    Value value = read_constant(chunk, index);
 
     printf("%-16s %4d '", name, index);
-    print_value(chunk->constants.values[index]);
+    print_value(value);
     printf("'\n");
 
     return offset + 1 + size;
@@ -58,6 +54,21 @@ int disassemble_instruction(Chunk *chunk, int offset)
 
     case OP_CONSTANT_LONG:
         return constant_instruction("OP_CONSTANT_LONG", chunk, offset, 3);
+
+    case OP_NEGATE:
+        return simple_instruction("OP_NEGATE", offset);
+
+    case OP_ADD:
+        return simple_instruction("OP_ADD", offset);
+
+    case OP_DIVIDE:
+        return simple_instruction("OP_DIVIDE", offset);
+
+    case OP_MULTIPLY:
+        return simple_instruction("OP_MULTIPLY", offset);
+
+    case OP_SUBTRACT:
+        return simple_instruction("OP_SUBTRACT", offset);
 
     default:
         printf("Unknown opcode: %d\n", instruction);
