@@ -9,10 +9,21 @@ static void reset_stack(VM *vm)
     vm->stack_top = vm->stack;
 }
 
+static int get_offset_vm(VM *vm)
+{
+    return (int)(vm->ip - vm->chunk->code);
+}
+
 // TODO: If you want to learn some of these techniques, look up “direct threaded code”, “jump table”, and “computed goto”.
 static InterpretResult run(VM *vm)
 {
 #define READ_BYTE() (*vm->ip++)
+#define READ_WORD(size) ({                \
+    int word = 0;                         \
+    for (int i = 0; i < size; i++)        \
+        word = (word << 8) | READ_BYTE(); \
+    word;                                 \
+})
 #define BINARY_OP(op)       \
     do                      \
     {                       \
@@ -32,7 +43,7 @@ static InterpretResult run(VM *vm)
             printf(" ]");
         }
         printf("\n");
-        disassemble_instruction(vm->chunk, (int)(vm->ip - vm->chunk->code));
+        disassemble_instruction(vm->chunk, get_offset_vm(vm));
 #endif
         uint8_t instruction;
         switch (instruction = READ_BYTE())
@@ -47,12 +58,7 @@ static InterpretResult run(VM *vm)
         }
         case OP_CONSTANT_LONG:
         {
-            // TODO: NOT WORKING
-            int index = get_constant_index(vm->chunk, (int)(vm->ip - vm->chunk->code), 3);
-            for (int i = 0; i < 3; i++)
-                READ_BYTE();
-
-            Value constant = read_constant(vm->chunk, index);
+            Value constant = read_constant(vm->chunk, READ_WORD(3));
             push(vm, constant);
             print_value(constant);
             printf("\n");
@@ -95,6 +101,7 @@ static InterpretResult run(VM *vm)
 
 #undef BINARY_OP
 #undef READ_BYTE
+#undef READ_WORD
 }
 
 void init_vm(VM *vm)
