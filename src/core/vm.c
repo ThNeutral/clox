@@ -1,12 +1,17 @@
 #include "core/vm.h"
-#include "utils/common.h"
+#include "utils/memory.h"
 #include "debug/disasm.h"
 
 #include <stdio.h>
 
+static Value *get_stack_top(VM *vm)
+{
+    return vm->stack + vm->stack_count;
+}
+
 static void reset_stack(VM *vm)
 {
-    vm->stack_top = vm->stack;
+    vm->stack_count = 0;
 }
 
 static int get_offset_vm(VM *vm)
@@ -36,7 +41,7 @@ static InterpretResult run(VM *vm)
     {
 #ifdef DEBUG_TRACE_EXECUTION
         printf("          ");
-        for (Value *slot = vm->stack; slot < vm->stack_top; slot++)
+        for (Value *slot = vm->stack; slot < get_stack_top(vm); slot++)
         {
             printf("[ ");
             print_value(*slot);
@@ -104,15 +109,33 @@ static InterpretResult run(VM *vm)
 #undef READ_WORD
 }
 
-void init_vm(VM *vm)
+void grow_stack(VM *vm)
+{
+    size_t old_capacity = vm->stack_capacity;
+    vm->stack_capacity = GROW_CAPACITY_OR_INIT(vm->stack_capacity, STACK_INITIAL_SIZE);
+    vm->stack = GROW_ARRAY(Value, vm->stack, old_capacity, vm->stack_capacity);
+}
+
+void reset_vm(VM *vm)
 {
     vm->chunk = NULL;
     reset_stack(vm);
 }
 
+void init_vm(VM *vm)
+{
+    vm->stack = NULL;
+    vm->stack_capacity = 0;
+    vm->stack_count = 0;
+
+    grow_stack(vm);
+    reset_vm(vm);
+}
+
 void free_vm(VM *vm)
 {
-    init_vm(vm);
+    FREE_ARRAY(Value, vm->stack, vm->stack_capacity);
+    reset_vm(vm);
 }
 
 InterpretResult interpret(VM *vm, Chunk *chunk)
@@ -124,12 +147,12 @@ InterpretResult interpret(VM *vm, Chunk *chunk)
 
 void push(VM *vm, Value value)
 {
-    *vm->stack_top = value;
-    vm->stack_top += 1;
+    *get_stack_top(vm) = value;
+    vm->stack_count += 1;
 }
 
 Value pop(VM *vm)
 {
-    vm->stack_top -= 1;
-    return *vm->stack_top;
+    vm->stack_count -= 1;
+    return *get_stack_top(vm);
 }
