@@ -71,7 +71,7 @@ static InterpretResult run(VM *vm)
         }
         case OP_NEGATE:
         {
-            push(vm, -pop(vm));
+            *(get_stack_top(vm) - 1) *= -1;
             break;
         }
         case OP_ADD:
